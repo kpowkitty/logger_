@@ -1,0 +1,32 @@
+{
+    "name": "logger_",
+    "description": "",
+    "dependencies": {
+        "core": "*",
+        "radio": "*",
+        "microphone": "*",
+        "datalogger": "*"
+    },
+    "files": [
+        "main.blocks",
+        "main.ts",
+        "README.md",
+        "compareBuffers.ts",
+        "concatenateBuffers.ts",
+        "none.ts",
+        "stringToBuffer.ts",
+        "storeData.ts",
+        "bufferToString.ts"
+    ],
+    "testFiles": [
+        "test.ts"
+    ],
+    "targetVersions": {
+        "target": "7.0.51",
+        "targetId": "microbit"
+    },
+    "supportedTargets": [
+        "microbit"
+    ],
+    "preferredEditor": "blocksprj"
+}
