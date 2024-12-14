@@ -1,50 +1,66 @@
 datalogger.onLogFull(function () {
     while (true) {
-        radio.sendString("" + (_full))
+        logger.sendBuffer(_full)
         basic.showString("F")
         if (input.buttonIsPressed(Button.A)) {
-            radio.sendString("" + (_empty))
+            start_sent = false
+            notReady = true
+            logger.sendBuffer(_empty)
             break;
         }
     }
 })
-radio.onReceivedString(function (receivedString) {
-    message = logger.stringToBuffer(receivedString)
+radio.onReceivedBuffer(function (buff) {
+    message = buff
 })
-let light2: Buffer = null
-let temp: Buffer = null
+let receivedLightLevel = ""
+let receivedTempLevel = ""
 let message: Buffer = null
 let start_sent = false
-let _empty: Buffer = null
+let notReady = false
 let _full: Buffer = null
-let _ready = logger.stringToBuffer("ready")
+let _empty: Buffer = null
 radio.setGroup(23)
 radio.setTransmitPower(7)
+_empty = logger.stringToBuffer("empty")
+_full = logger.stringToBuffer("full")
+let _ready = logger.stringToBuffer("ready")
 let _start = logger.stringToBuffer("start")
 let _ack = logger.stringToBuffer("ack")
-_full = logger.stringToBuffer("full")
-_empty = logger.stringToBuffer("empty")
+notReady = true
 while (true) {
     if (!(start_sent)) {
         if (input.buttonIsPressed(Button.AB)) {
-            radio.sendString("" + (_start))
+            logger.sendBuffer(_start)
             start_sent = true
+        } else {
+            continue;
         }
-    } else {
-        continue;
     }
+    basic.showString("SS")
     control.waitMicros(5000000)
-    if (message && logger.compareBuffers(message, _ready)) {
-        radio.sendString("" + (_ack))
-        basic.showString("A")
+    while (notReady) {
+        basic.showString("W")
+        if (message != logger.none() && logger.compareBuffers(message, _ready)) {
+            basic.showString("RR")
+            notReady = false
+            logger.sendBuffer(_ack)
+            basic.showString("A")
+            control.waitMicros(5000000)
+            while (true) {
+                if (message != logger.none() && message != _ready) {
+                    receivedTempLevel = logger.storeTemp(message)
+                    receivedLightLevel = logger.storeLight(message)
+                    basic.showString("R")
+                    datalogger.log(
+                    datalogger.createCV("Temperature", receivedTempLevel),
+                    datalogger.createCV("Light", receivedLightLevel)
+                    )
+                    break;
+                }
+            }
+        }
         control.waitMicros(5000000)
-        temp = message
-        light2 = message
-        basic.showString("R")
-        datalogger.log(
-        datalogger.createCV("Temperature", temp),
-        datalogger.createCV("Light", light2)
-        )
+        notReady = true
     }
-    control.waitMicros(5000000)
 }

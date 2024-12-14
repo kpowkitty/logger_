@@ -11,12 +11,7 @@
         "main.blocks",
         "main.ts",
         "README.md",
-        "compareBuffers.ts",
-        "concatenateBuffers.ts",
-        "none.ts",
-        "stringToBuffer.ts",
-        "storeData.ts",
-        "bufferToString.ts"
+        "logger.ts"
     ],
     "testFiles": [
         "test.ts"
