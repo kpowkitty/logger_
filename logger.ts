@@ -62,4 +62,11 @@ namespace logger {
     export function stringToBuffer(str: string): Buffer {
         return Buffer.fromUTF8(str);
     }
+
+	//% block
+	export function radioSendBuffer(buf: Buffer): void {
+		const packet = RadioPacket.mkPacket(PACKET_TYPE_BUFFER);
+		packet.bufferPayload = buf;
+		sendPacket(packet)
+	}
 }
