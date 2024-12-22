@@ -34,37 +34,43 @@ namespace logger {
         return str
     }
 
+    /*
+        The data can be received in any order, therefore, this function
+        parses which data was received and informs the program.
+    */
     //% block
-    export function storeTemp(temp: Buffer): string {
+    export function parseIncomingData(data: Buffer): number {
         const KEY_SIZE = 5;
 
         const ktemp = "temp ";
-        let dtemp = logger.bufferToString(temp)
+        const klight = "light";
+        let dataAsString = logger.bufferToString(data)
 
-        if (dtemp.slice(0, KEY_SIZE) !== ktemp) {
-            basic.showString("Assertion failed:");
-            basic.showString("dtemp[:KEY_SIZE]:" + dtemp.slice(0, KEY_SIZE));
-            throw "KEY ERROR";
+        if (dataAsString.slice(0, KEY_SIZE) == ktemp) {
+            return 0;
+        } else if (dataAsString.slice(0, KEY_SIZE) == klight) {
+            return 1;
+        } else {
+            //basic.showString("Assertion failed:");
+            //basic.showString("dtemp[:KEY_SIZE]:" + dataAsString.slice(0, KEY_SIZE));
+            return -1;
         }
-        dtemp = dtemp.slice(KEY_SIZE);
-
-        return dtemp;
     }
 
     //% block
-    export function storeLight(light: Buffer): string  {
+    export function storeLight(light: Buffer): string {
         const KEY_SIZE = 5;
-
-        const klight = "light";
         let dlight = logger.bufferToString(light);
-        if (dlight.slice(0, KEY_SIZE) !== klight) {
-            basic.showString("Assertion failed:");
-            basic.showString("dlight[:KEY_SIZE]:" + dlight.slice(0, KEY_SIZE));
-            throw "KEY ERROR";
-        }
         dlight = dlight.slice(KEY_SIZE);
-
         return dlight;
+    }
+
+    //% block
+    export function storeTemp(temp: Buffer): string {
+        const KEY_SIZE = 5;
+        let dtemp = logger.bufferToString(temp);
+        dtemp = dtemp.slice(KEY_SIZE);
+        return dtemp;
     }
 
     //% block
