@@ -21,67 +21,63 @@ radio.onReceivedBuffer(function (receivedBuffer) {
         message = receivedBuffer
     }
 })
-let started = false
+let start_sent = false
 let waiting = false
-let _ack: Buffer = null
-let _start: Buffer = null
-let _ready: Buffer = null
+let notReady = false
+let receivedLightLevel = ""
+let receivedTempLevel = ""
 let message: Buffer = null
 let _empty: Buffer = null
-let notReady = false
-let start_sent = false
 let _full: Buffer = null
-let receivedTempLevel: string
-let receivedLightLevel: string
+_full = logger.stringToBuffer("full")
+_empty = logger.stringToBuffer("empty")
+message = logger.none()
+receivedTempLevel = logger.none()
+receivedLightLevel = logger.none()
+let _ready = logger.stringToBuffer("ready")
+let _start = logger.stringToBuffer("start")
+let _ack = logger.stringToBuffer("ack")
 radio.setGroup(23)
 radio.setTransmitPower(7)
-basic.forever(function () {
-    _empty = logger.stringToBuffer("empty")
-    _full = logger.stringToBuffer("full")
-    _ready = logger.stringToBuffer("ready")
-    _start = logger.stringToBuffer("start")
-    _ack = logger.stringToBuffer("ack")
-    waiting = true
+let _req = logger.stringToBuffer("request")
+while (true) {
     notReady = true
-    started = true
-    start_sent = false
-    receivedTempLevel = null
-receivedLightLevel = null
-while (started) {
-        if (!(start_sent)) {
-            basic.pause(100)
-            if (input.buttonIsPressed(Button.AB)) {
-                logger.sendBuffer(_start)
-                start_sent = true
-            } else {
-                continue;
-            }
+    waiting = true
+    if (!(start_sent)) {
+        basic.showString("W")
+        basic.pause(100)
+        if (input.buttonIsPressed(Button.AB)) {
+            logger.sendBuffer(_start)
+            start_sent = true
+            basic.showString("S")
+        } else {
+            continue;
         }
-        basic.showString("SS")
-        basic.pause(5000)
-        while (notReady) {
-            basic.showString("W")
-            if (message != logger.none() && logger.compareBuffers(message, _ready)) {
-                basic.showString("RR")
-                notReady = false
-                logger.sendBuffer(_ack)
-                basic.showString("A")
-                basic.pause(10000)
-                while (waiting) {
-                    basic.showString("WD")
-                    basic.pause(100)
-                    // Only store the data and exit the while loop if both datapoints are received
-                    if (receivedTempLevel != logger.none() && receivedLightLevel != logger.none()) {
-                        datalogger.log(
-                        datalogger.createCV("Temperature", receivedTempLevel),
-                        datalogger.createCV("Light", receivedLightLevel)
-                        )
-                        waiting = false
-                    }
+    }
+    while (notReady) {
+        basic.showString("W")
+        basic.pause(100)
+        if (message != logger.none() && logger.compareBuffers(message, _ready)) {
+            basic.showString("R")
+            notReady = false
+            logger.sendBuffer(_ack)
+            basic.showString("A")
+            while (waiting) {
+                basic.pause(100)
+                // Only store the data and exit the while loop if both datapoints are received
+                if (receivedTempLevel != logger.none() && receivedLightLevel != logger.none()) {
+                    datalogger.log(
+                    datalogger.createCV("Temperature", receivedTempLevel),
+                    datalogger.createCV("Light", receivedLightLevel)
+                    )
+                    waiting = false
+                    basic.showString("L")
                 }
             }
-            notReady = false
         }
-        started = false
     }
-})
+    message = logger.none()
+    receivedTempLevel = logger.none()
+    receivedLightLevel = logger.none()
+    control.waitMicros(60000000)
+}
