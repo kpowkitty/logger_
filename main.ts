@@ -1,12 +1,16 @@
 datalogger.onLogFull(function () {
-    while (true) {
+    full = true
+    while (full) {
         logger.sendBuffer(_full)
         basic.showString("F")
         if (input.buttonIsPressed(Button.A)) {
+            logger.sendBuffer(_empty)
             start_sent = false
             notReady = true
-            logger.sendBuffer(_empty)
-            break;
+            full = false
+            message = logger.none()
+            receivedTempLevel = logger.none()
+            receivedLightLevel = logger.none()
         }
     }
 })
@@ -21,6 +25,7 @@ radio.onReceivedBuffer(function (receivedBuffer) {
         message = receivedBuffer
     }
 })
+let full = false
 let start_sent = false
 let waiting = false
 let notReady = false
@@ -79,5 +84,5 @@ while (true) {
     message = logger.none()
     receivedTempLevel = logger.none()
     receivedLightLevel = logger.none()
-    control.waitMicros(60000000)
+    control.waitMicros(6000000)
 }
