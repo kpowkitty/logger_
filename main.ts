@@ -26,6 +26,7 @@ radio.onReceivedBuffer(function (receivedBuffer) {
     }
 })
 let full = false
+let error = ""
 let start_sent = false
 let waiting = false
 let notReady = false
@@ -34,6 +35,9 @@ let receivedTempLevel = ""
 let message: Buffer = null
 let _empty: Buffer = null
 let _full: Buffer = null
+let watchdogLimit = 10000
+let lastActionTime = input.runningTime()
+let _request = logger.stringToBuffer("request")
 _full = logger.stringToBuffer("full")
 _empty = logger.stringToBuffer("empty")
 message = logger.none()
@@ -49,12 +53,13 @@ while (true) {
     notReady = true
     waiting = true
     if (!(start_sent)) {
-        basic.showString("W")
+        basic.showString("O")
         basic.pause(100)
         if (input.buttonIsPressed(Button.AB)) {
             logger.sendBuffer(_start)
             start_sent = true
             basic.showString("S")
+            lastActionTime = input.runningTime()
         } else {
             continue;
         }
@@ -62,14 +67,20 @@ while (true) {
     while (notReady) {
         basic.showString("W")
         basic.pause(100)
+        if (message != logger.none() && logger.compareBuffers(message, _request)) {
+            logger.sendBuffer(_ack)
+        }
         if (message != logger.none() && logger.compareBuffers(message, _ready)) {
             basic.showString("R")
             notReady = false
             logger.sendBuffer(_ack)
             basic.showString("A")
+            lastActionTime = input.runningTime()
             while (waiting) {
                 basic.pause(100)
-                // Only store the data and exit the while loop if both datapoints are received
+                if (message != logger.none() && logger.compareBuffers(message, _request)) {
+                    logger.sendBuffer(_ack)
+                }
                 if (receivedTempLevel != logger.none() && receivedLightLevel != logger.none()) {
                     datalogger.log(
                     datalogger.createCV("Temperature", receivedTempLevel),
@@ -77,12 +88,34 @@ while (true) {
                     )
                     waiting = false
                     basic.showString("L")
+                    lastActionTime = input.runningTime()
                 }
+            }
+        }
+        while (input.runningTime() - lastActionTime > watchdogLimit) {
+            error = "Ready Timeout"
+            datalogger.log(datalogger.createCV("Error", error))
+            basic.showString("E")
+            logger.sendBuffer(_request)
+            basic.pause(100)
+            if (message != logger.none() && logger.compareBuffers(message, _ready)) {
+                lastActionTime = input.runningTime()
             }
         }
     }
     message = logger.none()
     receivedTempLevel = logger.none()
     receivedLightLevel = logger.none()
+    lastActionTime = input.runningTime()
     control.waitMicros(6000000)
+    while (input.runningTime() - lastActionTime > watchdogLimit) {
+        error = "EOL Timeout"
+        datalogger.log(datalogger.createCV("Error", error))
+        basic.showString("E")
+        logger.sendBuffer(_request)
+        basic.pause(100)
+        if (message != logger.none() && logger.compareBuffers(message, _ready)) {
+            lastActionTime = input.runningTime()
+        }
+    }
 }
