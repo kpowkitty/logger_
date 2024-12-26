@@ -1,5 +1,10 @@
+# Coding for Conservation
+## Micro:bit program for tracking light and temperature in native bee hives
+### Used in combination with [Sensor](https://github.com/kpowkitty/sensor_)
 
-> Open this page at [https://kpowkitty.github.io/logger_/](https://kpowkitty.github.io/logger_/)
+#### About
+[Planet Bee Foundation](https://www.planetbee.org/) is programming [BBC Micro:bits](https://microbit.org/) with [Microsoft's Makecode](https://makecode.microbit.org/) in order to bring conservation efforts to student's classrooms across America!
+This program, __a WIP__, is being designed in combination with a Sensor script, so there will be one Micro:bit on the native bee home collecting the datapoints (the "Sensor"), and another Micro:bit within its bluetooth range that stores the data away from the nest, so the user can safely retrieve it without disturbing the home (the "Logger").
 
 ## Use as Extension
 
@@ -17,8 +22,3 @@ To edit this repository in MakeCode.
 * open [https://makecode.microbit.org/](https://makecode.microbit.org/)
 * click on **Import** then click on **Import URL**
 * paste **https://github.com/kpowkitty/logger_** and click import
-
-#### Metadata (used for search, rendering)
-
-* for PXT/microbit
-<script src="https://makecode.com/gh-pages-embed.js"></script><script>makeCodeRender("{{ site.makecode.home_url }}", "{{ site.github.owner_name }}/{{ site.github.repository_name }}");</script>
