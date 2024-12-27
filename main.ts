@@ -5,12 +5,14 @@ datalogger.onLogFull(function () {
         basic.showString("F")
         if (input.buttonIsPressed(Button.A)) {
             logger.sendBuffer(_empty)
-            start_sent = false
+            startSent = false
             notReady = true
             full = false
             message = logger.none()
             receivedTempLevel = logger.none()
             receivedLightLevel = logger.none()
+            logMessage = "Signal sent that log is empty"
+            datalogger.log(datalogger.createCV("Message", logMessage))
         }
     }
 })
@@ -18,16 +20,21 @@ radio.onReceivedBuffer(function (receivedBuffer) {
     if (logger.parseIncomingData(receivedBuffer) == 0) {
         basic.showString("T")
         receivedTempLevel = logger.storeTemp(receivedBuffer)
+        logMessage = "Temp received"
+        datalogger.log(datalogger.createCV("Message", logMessage))
     } else if (logger.parseIncomingData(receivedBuffer) == 1) {
         basic.showString("L")
         receivedLightLevel = logger.storeLight(receivedBuffer)
+        logMessage = "Light received"
+        datalogger.log(datalogger.createCV("Message", logMessage))
     } else {
         message = receivedBuffer
     }
 })
 let full = false
+let logMessage = ""
 let error = ""
-let start_sent = false
+let startSent = false
 let waiting = false
 let notReady = false
 let receivedLightLevel = ""
@@ -35,7 +42,7 @@ let receivedTempLevel = ""
 let message: Buffer = null
 let _empty: Buffer = null
 let _full: Buffer = null
-let watchdogLimit = 10000
+let watchdogLimit = 600000
 let lastActionTime = input.runningTime()
 let _request = logger.stringToBuffer("request")
 _full = logger.stringToBuffer("full")
@@ -52,13 +59,22 @@ let _req = logger.stringToBuffer("request")
 while (true) {
     notReady = true
     waiting = true
-    if (!(start_sent)) {
+    if (!(startSent)) {
         basic.showString("O")
         basic.pause(100)
+        if (message != logger.none() && logger.compareBuffers(message, _request)) {
+            logger.sendBuffer(_ready)
+            startSent = true
+            basic.showString("S")
+            error = "Program Restarted"
+            datalogger.log(datalogger.createCV("Error", error))
+        }
         if (input.buttonIsPressed(Button.AB)) {
             logger.sendBuffer(_start)
-            start_sent = true
+            startSent = true
             basic.showString("S")
+            logMessage = "Start sent"
+            datalogger.log(datalogger.createCV("Message", logMessage))
             lastActionTime = input.runningTime()
         } else {
             continue;
@@ -69,17 +85,25 @@ while (true) {
         basic.pause(100)
         if (message != logger.none() && logger.compareBuffers(message, _request)) {
             logger.sendBuffer(_ack)
+            logMessage = "Rescue activated"
+            datalogger.log(datalogger.createCV("Message", logMessage))
         }
         if (message != logger.none() && logger.compareBuffers(message, _ready)) {
             basic.showString("R")
+            logMessage = "Ready received"
+            datalogger.log(datalogger.createCV("Message", logMessage))
             notReady = false
             logger.sendBuffer(_ack)
             basic.showString("A")
+            logMessage = "Acknowledgement sent"
+            datalogger.log(datalogger.createCV("Message", logMessage))
             lastActionTime = input.runningTime()
             while (waiting) {
                 basic.pause(100)
                 if (message != logger.none() && logger.compareBuffers(message, _request)) {
                     logger.sendBuffer(_ack)
+                    logMessage = "Rescue activated"
+                    datalogger.log(datalogger.createCV("Message", logMessage))
                 }
                 if (receivedTempLevel != logger.none() && receivedLightLevel != logger.none()) {
                     datalogger.log(
@@ -88,6 +112,8 @@ while (true) {
                     )
                     waiting = false
                     basic.showString("L")
+                    logMessage = "Data logged"
+                    datalogger.log(datalogger.createCV("Message", logMessage))
                     lastActionTime = input.runningTime()
                 }
             }
@@ -107,7 +133,7 @@ while (true) {
     receivedTempLevel = logger.none()
     receivedLightLevel = logger.none()
     lastActionTime = input.runningTime()
-    control.waitMicros(6000000)
+    control.waitMicros(600000000)
     while (input.runningTime() - lastActionTime > watchdogLimit) {
         error = "EOL Timeout"
         datalogger.log(datalogger.createCV("Error", error))
