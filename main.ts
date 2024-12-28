@@ -5,14 +5,7 @@ datalogger.onLogFull(function () {
         basic.showString("F")
         if (input.buttonIsPressed(Button.A)) {
             logger.sendBuffer(_empty)
-            startSent = false
-            notReady = true
-            full = false
-            message = logger.none()
-            receivedTempLevel = logger.none()
-            receivedLightLevel = logger.none()
-            logMessage = "Signal sent that log is empty"
-            datalogger.log(datalogger.createCV("Message", logMessage))
+            control.reset()
         }
     }
 })
