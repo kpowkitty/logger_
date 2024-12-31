@@ -122,11 +122,7 @@ while (true) {
             }
         }
     }
-    message = logger.none()
-    receivedTempLevel = logger.none()
-    receivedLightLevel = logger.none()
-    lastActionTime = input.runningTime()
-    control.waitMicros(600000000)
+    loggerAbstracted.resetVariables()
     while (input.runningTime() - lastActionTime > watchdogLimit) {
         error = "EOL Timeout"
         datalogger.log(datalogger.createCV("Error", error))
