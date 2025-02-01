@@ -40,8 +40,9 @@ namespace loggerAbstracted {
 
     //% block
     export function waitForReady() {
-        while (notReady) {
-            basic.showString("W")
+        basic.showString("W")
+        basic.clearScreen()
+        while (notReady) { 
             basic.pause(100)
             if (message != logger.none() && logger.compareBuffers(message, _request)) {
                 logger.sendBuffer(_ack)

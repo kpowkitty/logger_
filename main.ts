@@ -19,7 +19,8 @@ radio.onReceivedBuffer(function (receivedBuffer) {
     }
 })
 let full = false
-let message: Buffer = logger.none()
+let message: Buffer = null
+message = logger.none()
 let receivedTempLevel: string = logger.none()
 let receivedLightLevel: string = logger.none()
 radio.setGroup(23)
