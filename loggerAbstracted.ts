@@ -1,8 +1,23 @@
+let logMessage = ""
+let error = ""
+let startSent = false
+let waiting = true
+let notReady = true
+let _empty: Buffer = null
+let _full: Buffer = null
+let watchdogLimit = 3600000
+let lastActionTime = input.runningTime()
+let _request = logger.stringToBuffer("request")
+_full = logger.stringToBuffer("full")
+_empty = logger.stringToBuffer("empty")
+let _ready = logger.stringToBuffer("ready")
+let _start = logger.stringToBuffer("start")
+let _ack = logger.stringToBuffer("ack")
+let _req = logger.stringToBuffer("request")
+
 namespace loggerAbstracted {
     //% block
     export function requestRescue() {
-        let error = "Timeout"
-        datalogger.log(datalogger.createCV("Error", error))
         basic.showString("E")
         logger.sendBuffer(_request)
         basic.pause(100)
@@ -17,8 +32,137 @@ namespace loggerAbstracted {
         receivedTempLevel = logger.none()
         receivedLightLevel = logger.none()
         lastActionTime = input.runningTime()
-        control.waitMicros(600000000)
+        waiting = true
+        notReady = true
+        control.waitMicros(3600000000)
+        checkForTimeout()
     }
 
-    
+    //% block
+    export function waitForReady() {
+        while (notReady) {
+            basic.showString("W")
+            basic.pause(100)
+            if (message != logger.none() && logger.compareBuffers(message, _request)) {
+                logger.sendBuffer(_ack)
+            }
+            if (message != logger.none() && logger.compareBuffers(message, _ready)) {
+                basic.showString("R")
+                notReady = false
+                logger.sendBuffer(_ack)
+                basic.showString("A")
+                lastActionTime = input.runningTime()
+            }
+            if (timingOut()) {
+                errorLog("Ready timeout")
+            }
+            while (timingOut()) {
+                requestRescue()
+            }
+        }
+    }  
+
+    //% block
+    export function sendRescue() {
+        logger.sendBuffer(_ack)
+        logMessage = "Rescue activated"
+        datalogger.log(datalogger.createCV("Message", logMessage))
+    }
+
+    //% block
+    export function timingOut(): Boolean {
+        return input.runningTime() - lastActionTime > watchdogLimit
+    }
+
+    //% block
+    export function waitForData() {
+        while (waiting) {
+            basic.pause(100)
+            if (message != logger.none() && logger.compareBuffers(message, _request)) {
+                sendRescue()
+            }
+            if (receivedTempLevel != logger.none() && receivedLightLevel != logger.none()) {
+                waiting = false
+            }
+            if (timingOut()) {
+                errorLog("Ready timeout")
+            }
+            while (timingOut()) {
+                requestRescue()
+            }
+        }
+    }
+
+    //% block
+    export function waitingForData() {
+        return waiting
+    }
+
+    //% block
+    export function storeData() {
+        datalogger.log(
+            datalogger.createCV("Temperature", receivedTempLevel),
+            datalogger.createCV("Light", receivedLightLevel)
+        )
+        waiting = false
+        basic.showString("L")
+        basic.clearScreen()
+        lastActionTime = input.runningTime()
+    }
+
+    //% block
+    export function checkForTimeout() {
+        while (timingOut()) {
+            requestRescue()
+        }
+    }
+
+    //% block
+    export function logTemperature(receivedBuffer: Buffer) {
+        basic.showString("T")
+        basic.clearScreen()
+        receivedTempLevel = logger.storeTemp(receivedBuffer)
+    }
+
+    //% block
+    export function logLight(receivedBuffer: Buffer) {
+        basic.showString("L")
+        basic.clearScreen()
+        receivedLightLevel = logger.storeLight(receivedBuffer)
+    }
+
+    //% block
+    export function startedYet() {
+        basic.showString("O")
+        basic.pause(100)
+        if (message != logger.none() && logger.compareBuffers(message, _request)) {
+            logger.sendBuffer(_ready)
+            basic.showString("S")
+            basic.clearScreen()
+            startSent = true
+            errorLog("Program Restarted")
+            return true
+        }
+        if (input.buttonIsPressed(Button.AB)) {
+            logger.sendBuffer(_start)
+            startSent = true
+            basic.showString("S")
+            basic.clearScreen()
+            lastActionTime = input.runningTime()
+            return true
+        }
+        if (startSent) {
+            return true
+        }
+        return false
+    }
+
+    // Helper functions for logging dynamically
+    export function errorLog(myError: string) {
+        datalogger.log(datalogger.createCV("Error", myError))
+    }
+
+    export function messageLog(myMessage: string) {
+        datalogger.log(datalogger.createCV("Message", myMessage))
+    }
 }
