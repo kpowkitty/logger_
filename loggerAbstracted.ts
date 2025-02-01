@@ -34,7 +34,7 @@ namespace loggerAbstracted {
         lastActionTime = input.runningTime()
         waiting = true
         notReady = true
-        control.waitMicros(3600000000)
+        wait60Minutes()
         checkForTimeout()
     }
 
@@ -156,6 +156,15 @@ namespace loggerAbstracted {
             return true
         }
         return false
+    }
+
+    // control.waitMicros() only has a gaurantee to wait up to a certain amount because
+    // it only has 32 bits, need to break it up into smaller chunks
+    //% block
+    export function wait60Minutes() {
+        for (let i = 0; i < 5; i++) {
+            control.waitMicros(600000000) // 10 minutes per iteration
+        }
     }
 
     // Helper functions for logging dynamically
