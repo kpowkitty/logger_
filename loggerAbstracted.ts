@@ -84,6 +84,7 @@ namespace loggerAbstracted {
             }
             if (receivedTempLevel != logger.none() && receivedLightLevel != logger.none()) {
                 waiting = false
+                lastActionTime = input.runningTime()
             }
             if (timingOut()) {
                 errorLog("Ready timeout")
@@ -158,13 +159,8 @@ namespace loggerAbstracted {
         return false
     }
 
-    // control.waitMicros() only has a gaurantee to wait up to a certain amount because
-    // it only has 32 bits, need to break it up into smaller chunks
-    //% block
     export function wait60Minutes() {
-        for (let i = 0; i < 5; i++) {
-            control.waitMicros(600000000) // 10 minutes per iteration
-        }
+        basic.pause(3600000) // 60 minutes in milliseconds
     }
 
     // Helper functions for logging dynamically
